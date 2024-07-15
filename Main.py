@@ -4,7 +4,6 @@ import google.generativeai as genai
 import re
 from PIL import Image
 import requests
-import PyPDF2
 
 st.set_page_config(
     page_title="BDOGPT_gemini",
@@ -74,20 +73,6 @@ def load_modelvision() -> genai.GenerativeModel:
     model = genai.GenerativeModel('gemini-pro-vision')
     return model
 
-def read_pdf(file) -> str:
-    """
-    The function `read_pdf` takes in a file object and returns the text extracted from the PDF file.
-
-    :param file: The `file` parameter is a file object representing the PDF file to be read.
-    :return: The extracted text from the PDF file as a string.
-    """
-    pdf_reader = PyPDF2.PdfReader(file)
-    text = ""
-    for page_num in range(len(pdf_reader.pages)):
-        page = pdf_reader.pages[page_num]
-        text += page.extract_text()
-    return text
-
 #=================================================================
 #CONFIGURATION
 genai.configure(api_key='AIzaSyDkmaWadxYJGAgWdMVpB-qfPyhrjctrZcI')
@@ -143,7 +128,7 @@ if len(st.session_state.chat_session) > 0:
                     st.image(message['user']['parts'][1], width=200)
         count += 1
 
-cols = st.columns(5)
+cols = st.columns(4)
 
 with cols[0]:
     image_attachment = st.toggle("Attach image", value=False, help="Activate this mode to attach an image and let the chatbot read it")
@@ -154,8 +139,6 @@ with cols[2]:
     csv_excel_attachment = st.toggle("Attach CSV or Excel", value=False, help="Activate this mode to attach a CSV or Excel file and let the chatbot read it")
 with cols[3]:
     graphviz_mode = st.toggle("Graphviz mode", value=False, help="Activate this mode to generate a graph with graphviz in .dot from your message")
-with cols[4]:
-    pdf_attachment = st.toggle("Attach PDF", value=False, help="Activate this mode to attach a PDF file and let the chatbot read it")
 
 if image_attachment:
     image = st.file_uploader("Upload your image", type=['png', 'jpg', 'jpeg'])
@@ -174,11 +157,6 @@ if csv_excel_attachment:
 else:
     csvexcelattachment = None
 
-if pdf_attachment:
-    pdfattachment = st.file_uploader("Upload your PDF file", type=['pdf'])
-else:
-    pdfattachment = None
-
 prompt = st.chat_input("How can BDO help you today?")
 
 if prompt:
@@ -193,9 +171,6 @@ if prompt:
         except:
             df = pd.read_excel(csvexcelattachment)
         txt += '   Dataframe: \n' + str(df)
-
-    if pdfattachment:
-        txt += '   PDF file: \n' + read_pdf(pdfattachment)
 
     if graphviz_mode:
         txt += '   Generate a graph with graphviz in .dot \n'
