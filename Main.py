@@ -6,8 +6,8 @@ from PIL import Image
 import requests
 
 st.set_page_config(
-    page_title="BDOGPT_gemini",
-    page_icon="https://seeklogo.com/images/G/google-ai-logo-996E85F6FD-seeklogo.com.png",
+    page_title="BDOGPT",
+    page_icon="🐦",
     layout="wide",
 )
 
@@ -138,7 +138,7 @@ with cols[1]:
 with cols[2]:
     csv_excel_attachment = st.toggle("Attach CSV or Excel", value=False, help="Activate this mode to attach a CSV or Excel file and let the chatbot read it")
 with cols[3]:
-    graphviz_mode = st.toggle("Graphviz mode", value=False, help="Activate this mode to generate a graph with graphviz in .dot from your message")
+    graphviz_mode = st.toggle("Graphviz mode", value=False, help="Generates graphs from your prompts or Data")
 
 if image_attachment:
     image = st.file_uploader("Upload your image", type=['png', 'jpg', 'jpeg'])
