@@ -4,6 +4,10 @@ import google.generativeai as genai
 import re
 from PIL import Image
 import requests
+import markdown
+
+# PDF PROCESSING
+import PyPDF2
 
 st.set_page_config(
     page_title="BDOGPT",
@@ -13,72 +17,39 @@ st.set_page_config(
 
 #------------------------------------------------------------
 #HEADER
-st.markdown('''
-🐦BDO-GPT''', unsafe_allow_html=True)
+st.title('🐦BDO-GPT')
 st.caption("With ❤️ by your Intern")
-
-#------------------------------------------------------------
-#LANGUAGE
-langcols = st.columns([0.2,0.8])
-with langcols[0]:
-    lang = st.selectbox('Select your language', ('English',))
-
-if 'lang' not in st.session_state:
-    st.session_state.lang = lang
-st.divider()
 
 #------------------------------------------------------------
 #FUNCTIONS
 def extract_graphviz_info(text: str) -> list[str]:
-    """
-    The function `extract_graphviz_info` takes in a text and returns a list of graphviz code blocks found in the text.
-
-    :param text: The `text` parameter is a string that contains the text from which you want to extract Graphviz information
-    :return: a list of strings that contain either the word "graph" or "digraph". These strings are extracted from the input
-    text.
-    """
-
     graphviz_info  = text.split('```')
-
     return [graph for graph in graphviz_info if ('graph' in graph or 'digraph') and ('{' in graph and '}' in graph)]
 
 def append_message(message: dict) -> None:
-    """
-    The function appends a message to a chat session.
-
-    append_message(message) is a function that takes in a dictionary (message) that represents a chat message.
-    The dictionary contains info on the user that sent the message and message content.
-    # Consumes dictionary
-    # Return : Nil
-    """
     st.session_state.chat_session.append({'user': message})
     return
 
 @st.cache_resource
 def load_model() -> genai.GenerativeModel:
-    """
-    The function `load_model()` returns an instance of the `genai.GenerativeModel` class initialized with the model name
-    'gemini-pro'.
-    :return: an instance of the `genai.GenerativeModel` class.
-    """
     model = genai.GenerativeModel('gemini-pro')
     return model
 
 @st.cache_resource
 def load_modelvision() -> genai.GenerativeModel:
-    """
-    The function `load_modelvision` loads a generative model for vision tasks using the `gemini-pro-vision` model.
-    :return: an instance of the `genai.GenerativeModel` class.
-    """
     model = genai.GenerativeModel('gemini-pro-vision')
     return model
+
+def download_html(response):
+    markdown_content = f"# Produced by BDO GPT\n\n{response}"
+    html_content = markdown.markdown(markdown_content)
+    return html_content
 
 #=================================================================
 #CONFIGURATION
 genai.configure(api_key='AIzaSyDkmaWadxYJGAgWdMVpB-qfPyhrjctrZcI')
 
 model = load_model()
-
 vision = load_modelvision()
 
 if 'chat' not in st.session_state:
@@ -93,12 +64,13 @@ if 'chat_session' not in st.session_state:
 if 'messages' not in st.session_state:
     st.session_state.messages = []
 
-if 'welcome' not in st.session_state or lang != st.session_state.lang:
-    st.session_state.lang = lang
+if 'welcome' not in st.session_state :
     welcome  = model.generate_content(f'''
-    Give a welcome greeting to the user and suggest what they can do
-    (You can describe images, answer questions, read text files, read tables, generate graphs with graphviz, etc.)
-    You are a chatbot in a chat application created in Streamlit and Python. generate the answer in {lang}''')
+    Give the User a Welcome greeting and list the things you can do such as describe images, query pdfs,
+                                      make graphs using Graphiz, and talk to excel documents:
+    Hello! I am BDOGPT, a Generative AI assistant designed to help you describe images, query documents,
+    and make your life better :)
+    ''')
     welcome.resolve()
     st.session_state.welcome = welcome
 
@@ -111,7 +83,6 @@ else:
 if len(st.session_state.chat_session) > 0:
     count = 0
     for message in st.session_state.chat_session:
-
         if message['user']['role'] == 'model':
             with st.chat_message('ai'):
                 st.write(message['user']['parts'])
@@ -121,6 +92,14 @@ if len(st.session_state.chat_session) > 0:
                         st.graphviz_chart(graph, use_container_width=False)
                         with st.expander("View text"):
                             st.code(graph, language='dot')
+                
+                html_content = download_html(message['user']['parts'])
+                st.download_button(
+                    label="Save Response",
+                    data=html_content,
+                    file_name=f"response_{count}.html",
+                    mime="text/html"
+                )
         else:
             with st.chat_message('user'):
                 st.write(message['user']['parts'][0])
@@ -128,34 +107,38 @@ if len(st.session_state.chat_session) > 0:
                     st.image(message['user']['parts'][1], width=200)
         count += 1
 
-cols = st.columns(4)
-
-with cols[0]:
+# Sidebar
+with st.sidebar:
     image_attachment = st.toggle("Attach image", value=False, help="Activate this mode to attach an image and let the chatbot read it")
-
-with cols[1]:
     txt_attachment = st.toggle("Attach text file", value=False, help="Activate this mode to attach a text file and let the chatbot read it")
-with cols[2]:
     csv_excel_attachment = st.toggle("Attach CSV or Excel", value=False, help="Activate this mode to attach a CSV or Excel file and let the chatbot read it")
-with cols[3]:
     graphviz_mode = st.toggle("Graphviz mode", value=False, help="Generates graphs from your prompts or Data")
+    pdf_attachment = st.toggle("Upload PDF", value=False, help="Upload a PDF to query")
 
-if image_attachment:
-    image = st.file_uploader("Upload your image", type=['png', 'jpg', 'jpeg'])
-    url = st.text_input("Or paste your image url")
-else:
-    image = None
-    url = ''
+    if image_attachment:
+        image = st.file_uploader("Upload your image", type=['png', 'jpg', 'jpeg'])
+        url = st.text_input("Or paste your image url")
+    else:
+        image = None
+        url = ''
 
-if txt_attachment:
-    txtattachment = st.file_uploader("Upload your text file", type=['txt'])
-else:
-    txtattachment = None
+    if txt_attachment:
+        txtattachment = st.file_uploader("Upload your text file", type=['txt'])
+    else:
+        txtattachment = None
 
-if csv_excel_attachment:
-    csvexcelattachment = st.file_uploader("Upload your CSV or Excel file", type=['csv', 'xlsx'])
-else:
-    csvexcelattachment = None
+    if csv_excel_attachment:
+        csvexcelattachment = st.file_uploader("Upload your CSV or Excel file", type=['csv', 'xlsx'])
+    else:
+        csvexcelattachment = None
+
+# ADDED PDF UPLOAD 
+    if pdf_attachment:
+        pdfattachment = st.file_uploader("Upload your PDF file", type=['pdf'])
+    else: 
+        pdfattachment = None
+
+# =========================================================================================================
 
 prompt = st.chat_input("How can BDO help you today?")
 
