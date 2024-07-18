@@ -3,3 +3,4 @@ pandas
 numpy
 markdown
 PyPDF2
+openpyxl
