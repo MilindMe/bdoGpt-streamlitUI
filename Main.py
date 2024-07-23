@@ -53,7 +53,7 @@ def load_model() -> genai.GenerativeModel:
 # intepret images
 @st.cache_resource
 def load_modelvision() -> genai.GenerativeModel:
-    model = genai.GenerativeModel('gemini-pro-vision')
+    model = genai.GenerativeModel('gemini-1.5-flash')
     return model
 
 
@@ -70,9 +70,8 @@ def extract_from_pdf(pdf_file):
     extracted_text = ""
     for page_num in range(len(reader.pages)):
         page = reader.pages[page_num]
-        extracted_text +=   page.extract_text() + "\n"
+        extracted_text += page.extract_text() + "\n"
     return extracted_text
-    
 
 #=================================================================
 # CONFIGURATION
@@ -147,6 +146,8 @@ def toggle_domain_type():
 
 # =================================== SIDEBAR ================================================
 with st.sidebar:
+    st.subheader("📁 Upload files")
+    st.divider()
     image_attachment = st.checkbox("Attach image", value=False, help="Attach an image and let BDOGPT help")
     txt_attachment = st.checkbox("Attach text file", value=False, help="Attach a Text file and let BDOGPT help")
     csv_excel_attachment = st.checkbox("Attach CSV or Excel", value=False, help="Attach a CSV or Excel file and let BDOGPT help")
@@ -171,9 +172,9 @@ with st.sidebar:
         csvexcelattachment = None
 
     if pdf_attachment:
-        pdfattachment = st.file_uploader("Upload your PDF file", type=['pdf'])
+        pdfattachments = st.file_uploader("Upload your PDF file", accept_multiple_files=True, type=['pdf'])
     else:
-        pdfattachment = None
+        pdfattachments = None
 
 # =========================================================================================================
 
@@ -192,14 +193,21 @@ if prompt:
             df = pd.read_excel(csvexcelattachment)
         txt += '   Dataframe: \n' + str(df)
     
-    if pdfattachment:
-        txt = extract_from_pdf(pdfattachment)
-        txt = ' PDF File : \n' + txt
+    if pdfattachments:
+        if len(pdfattachments) > 2:
+            st.error("You can upload a maximum of 2 PDFs.")
+        else:
+            pdf_texts = []
+            for index, pdfattachment in enumerate(pdfattachments):
+                pdf_title = pdfattachment.name
+                pdf_text = extract_from_pdf(pdfattachment)
+                pdf_texts.append(f"FILE {index + 1} ({pdf_title}):\n{pdf_text}\n")
+            txt += '\n'.join(pdf_texts)
 
     if graphviz_mode:
         txt += '   Generate a graph with graphviz in .dot \n'
 
-# Conditional Check : If length of text exceeds 8000, truncatenate and display with ... at the end
+# Check : If length of text exceeds 8000, truncatenate and display with ... at the end
     if len(txt) > 8000:
         txt = txt[:8000] + '...'
     if image or url != '':
