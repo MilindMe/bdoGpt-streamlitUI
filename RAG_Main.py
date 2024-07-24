@@ -12,7 +12,6 @@ from langchain.agents import AgentExecutor, create_tool_calling_agent
 # M.MEETARBHAN
 # 7/17/2024 
 # MULTI DOCUMENT RETREIVAL AUGMENTED GENERATION SYSTEM FOR BDO GPT 
-#
 
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -26,7 +25,8 @@ if google_api_key is None:
     st.warning("API KEY NOT FOUND. PLEASE SET GOOGLE_API_KEY ENVIRONMENT VARIABLE :(")
     st.stop()
 
-#=====================================================================================
+# ================================== FUNCTIONS ========================================
+# =====================================================================================
 # Processing PDFs -- Uses PyPdf2
 def pdf_read(pdfDoc):
     text =""
@@ -46,7 +46,7 @@ def get_chunks(text):
 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
 # IMPLEMENTATION 1 -- Vector Storarge -- Uses ChromaDB 
-vector_index = Chroma.from_texts(texts, embeddings).as_retriever()
+# vector_index = Chroma.from_texts(texts, embeddings).as_retriever()
 # IMPLEMENTATION 2 -- Vector Storage -- Uses FAISS
 def vector_store(text_chunks):
     vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)

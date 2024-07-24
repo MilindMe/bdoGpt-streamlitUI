@@ -6,6 +6,7 @@ from PIL import Image
 import requests
 import markdown
 import time
+import os
 
 # PDF PROCESSING
 import PyPDF2
@@ -72,6 +73,20 @@ def extract_from_pdf(pdf_file):
         page = reader.pages[page_num]
         extracted_text += page.extract_text() + "\n"
     return extracted_text
+
+# extractAudio_to_text() consumes a .mp3 file and calls the Model to convert
+# the audio file to text
+def extractAudio_to_text(audio_file_path):
+    audio_file = genai.upload_file(path=audio_file_path)
+    prompt = """
+    Listen carefully to the following audio file and transcribe the contents.
+    Produce a relatively lengthy summary.
+    """
+    response = vision.generate_content([prompt, audio_file])
+    # Removes the temporary audio file path after processing 
+    os.remove(audio_file_path)
+    return response.text
+
 
 #=================================================================
 # CONFIGURATION
@@ -153,6 +168,12 @@ with st.sidebar:
     csv_excel_attachment = st.checkbox("Attach CSV or Excel", value=False, help="Attach a CSV or Excel file and let BDOGPT help")
     graphviz_mode = st.checkbox("Graphviz mode", value=False, help="Generates graphs from your prompts or Data")
     pdf_attachment = st.checkbox("Upload PDF", value=False, help="Upload a PDF to query")
+    
+    # M.Meetarbhan ============================
+    # Audio File Processing Feature
+    # 7/23/2024 
+    audio_attachment = st.checkbox("Upload Audio File", value=False, help="Upload an Audio File and let BDOGPT cook up a Summary")
+    # =========================================
 
     if image_attachment:
         image = st.file_uploader("Upload your image", type=['png', 'jpg', 'jpeg'])
@@ -161,20 +182,29 @@ with st.sidebar:
         image = None
         url = ''
 
+    # Text Upload
     if txt_attachment:
         txtattachment = st.file_uploader("Upload your text file", type=['txt'])
     else:
         txtattachment = None
 
+    # Excel Upload
     if csv_excel_attachment:
         csvexcelattachment = st.file_uploader("Upload your CSV or Excel file", type=['csv', 'xlsx'])
     else:
         csvexcelattachment = None
 
+    # Pdf Upload
     if pdf_attachment:
         pdfattachments = st.file_uploader("Upload your PDF file", accept_multiple_files=True, type=['pdf'])
     else:
         pdfattachments = None
+
+    # Audio Upload
+    if audio_attachment:
+        audio_attachment = st.file_uploader("Upload Audio File", accept_multiple_files=False, type=['mp3'])
+    else: 
+        audio_attachment = None
 
 # =========================================================================================================
 
@@ -203,6 +233,22 @@ if prompt:
                 pdf_text = extract_from_pdf(pdfattachment)
                 pdf_texts.append(f"FILE {index + 1} ({pdf_title}):\n{pdf_text}\n")
             txt += '\n'.join(pdf_texts)
+    
+
+    # AUDIO ATTACHMENT FEATURE ==============================================
+    # The Audio Attachment needs to save the audio file locally in a temporary folder to provide to the Gemini API
+    # TODO : Testing when using a Virtual Machine
+
+    if audio_attachment:
+        # TODO : IMPLEMENT ERROR HANDLING FOR UNSUPPORTED TYPE
+        # FUNCTION SHOULD THROW AN ERROR LIKE : EXPECTED A BLOB DICT OR IMAGE TYPE BUT GOT {type(audio_file)}
+        file_path = os.path.join("temp", audio_attachment.name)
+        with open(file_path, "wb") as f:
+            f.write(audio_attachment.getbuffer())
+        txt = ' Audio File Summary : \n' + extractAudio_to_text(file_path)
+
+    # =======================================================================
+
 
     if graphviz_mode:
         txt += '   Generate a graph with graphviz in .dot \n'
@@ -221,7 +267,7 @@ if prompt:
 
     append_message(prmt)
 
-    with st.spinner('Wait, BDO is cooking...'):
+    with st.spinner('Please Wait, BDO is cooking...'):
         if len(prmt['parts']) > 1:
             response = vision.generate_content(prmt['parts'], stream=True, safety_settings=[
                 {
@@ -243,19 +289,3 @@ if prompt:
             append_message({'role': 'model', 'parts': f'{type(e).__name__}: {e}'})
 
         st.rerun()
-
-# Handle query_rag for text input
-if prompt and st.session_state.domainType:
-    start_time = time.time()
-    add_message("user", prompt)
-    response_placeholder = st.empty()
-
-    response_text = ""
-    for chunk in query_rag(prompt, st.session_state.domainType):
-        response_text += chunk + " "
-        response_placeholder.markdown(f"**Assistant:** {response_text.strip()}")
-
-    add_message("assistant", response_text.strip())
-    time_taken = time.time() - start_time
-
-    st.success(f"Success :) Time Taken :{time_taken}", icon="🔥")

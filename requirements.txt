@@ -1,6 +1,3 @@
 google-generativeai
 pandas
 numpy
-markdown
-PyPDF2
-openpyxl
