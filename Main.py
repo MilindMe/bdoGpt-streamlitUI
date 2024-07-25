@@ -254,8 +254,8 @@ if prompt:
         txt += '   Generate a graph with graphviz in .dot \n'
 
 # Check : If length of text exceeds 8000, truncatenate and display with ... at the end
-    if len(txt) > 8000:
-        txt = txt[:8000] + '...'
+    if len(txt) > 20000:
+        txt = txt[:20000] + '...'
     if image or url != '':
         if url != '':
             img = Image.open(requests.get(url, stream=True).raw)
