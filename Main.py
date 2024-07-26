@@ -219,9 +219,12 @@ if prompt:
     if csvexcelattachment:
         try:
             df = pd.read_csv(csvexcelattachment)
+            txt += '    Datagrame: \n' + str(df)
         except:
-            df = pd.read_excel(csvexcelattachment)
-        txt += '   Dataframe: \n' + str(df)
+            xls = pd.ExcelFile(csvexcelattachment)
+            all_sheets_df = {sheet: xls.parse(sheet) for sheet in xls.sheet_names}
+            for sheet_name, sheet_df in all_sheets_df.items():
+                txt += f'   Sheet: {sheet_name}\n' + str(sheet_df) + '\n\n'
     
     if pdfattachments:
         if len(pdfattachments) > 2:
