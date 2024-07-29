@@ -257,6 +257,7 @@ if prompt:
         txt += '   Generate a graph with graphviz in .dot \n'
 
 # Check : If length of text exceeds 8000, truncatenate and display with ... at the end
+
     #if len(txt) > 120000:
         #txt = txt[:120000] + '...'
 
