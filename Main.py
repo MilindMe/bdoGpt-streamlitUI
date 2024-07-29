@@ -47,7 +47,7 @@ def add_message(role, content):
 # load_model() loads the default gemini-pro model for general tasks
 @st.cache_resource
 def load_model() -> genai.GenerativeModel:
-    model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel('gemini-1.5-flash')
     return model
 
 # load_modelvision() is a simple function that returns the vision model used to 
@@ -257,8 +257,9 @@ if prompt:
         txt += '   Generate a graph with graphviz in .dot \n'
 
 # Check : If length of text exceeds 8000, truncatenate and display with ... at the end
-    if len(txt) > 20000:
-        txt = txt[:20000] + '...'
+    #if len(txt) > 120000:
+        #txt = txt[:120000] + '...'
+
     if image or url != '':
         if url != '':
             img = Image.open(requests.get(url, stream=True).raw)
