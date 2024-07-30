@@ -7,13 +7,17 @@ import requests
 import markdown
 import time
 import os
+from dotenv import load_dotenv
 
 # PDF PROCESSING
 import PyPDF2
 
 # M. MEETARBHAN
 # 7/23/2024
-
+ 
+# ENVIRONMENT VARIABLE FOR API KEY
+load_dotenv()
+google_api_key = os.getenv('GOOGLE_API_KEY')
 
 # === TITLE ====
 st.set_page_config(
@@ -91,8 +95,11 @@ def extractAudio_to_text(audio_file_path):
 #=================================================================
 # CONFIGURATION
 # TODO : SET API KEY AS AN ENVIRONMENT VARIABLE
-genai.configure(api_key='AIzaSyDkmaWadxYJGAgWdMVpB-qfPyhrjctrZcI')
+#genai.configure(api_key='AIzaSyDkmaWadxYJGAgWdMVpB-qfPyhrjctrZcI')
 
+# === Billable Key === 
+genai.configure(api_key=google_api_key)
+# ================
 model = load_model()
 vision = load_modelvision()
 
@@ -240,7 +247,6 @@ if prompt:
 
     # AUDIO ATTACHMENT FEATURE ==============================================
     # The Audio Attachment needs to save the audio file locally in a temporary folder to provide to the Gemini API
-    # TODO : Testing when using a Virtual Machine
 
     if audio_attachment:
         # TODO : IMPLEMENT ERROR HANDLING FOR UNSUPPORTED TYPE
@@ -257,6 +263,7 @@ if prompt:
         txt += '   Generate a graph with graphviz in .dot \n'
 
 # Check : If length of text exceeds 8000, truncatenate and display with ... at the end
+# TODO : DYNAMIC WORD COUNT ADJUSTMENT 
     if len(txt) > 100000:
         txt = txt[:100000] + '...'
     if image or url != '':
