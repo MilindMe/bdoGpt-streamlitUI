@@ -12,6 +12,9 @@ from dotenv import load_dotenv
 # PDF PROCESSING
 import PyPDF2
 
+# WORD PROCESSING
+from docx import Document
+
 # M. MEETARBHAN
 # 7/23/2024
  
@@ -51,7 +54,7 @@ def add_message(role, content):
 # load_model() loads the default gemini-pro model for general tasks
 @st.cache_resource
 def load_model() -> genai.GenerativeModel:
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-pro')
     return model
 
 # load_modelvision() is a simple function that returns the vision model used to 
@@ -91,6 +94,13 @@ def extractAudio_to_text(audio_file_path):
     os.remove(audio_file_path)
     return response.text
 
+# extract_from_word() consumes a word document and parses the text from it
+def extract_from_word(doc_file):
+    doc = Document(doc_file)
+    full_text = []
+    for para in doc.paragraphs:
+        full_text.append(para.text)
+    return '\n'.join(full_text)
 
 #=================================================================
 # CONFIGURATION
@@ -170,17 +180,25 @@ def toggle_domain_type():
 with st.sidebar:
     st.subheader("📁 Upload files")
     st.divider()
-    image_attachment = st.checkbox("Attach image", value=False, help="Attach an image and let BDOGPT help")
-    txt_attachment = st.checkbox("Attach text file", value=False, help="Attach a Text file and let BDOGPT help")
-    csv_excel_attachment = st.checkbox("Attach CSV or Excel", value=False, help="Attach a CSV or Excel file and let BDOGPT help")
-    graphviz_mode = st.checkbox("Graphviz mode", value=False, help="Generates graphs from your prompts or Data")
-    pdf_attachment = st.checkbox("Upload PDF", value=False, help="Upload a PDF to query")
-    
+    image_attachment = st.checkbox("Image", value=False, help="Attach an image and let BDOGPT help")
+    txt_attachment = st.checkbox("Text file", value=False, help="Attach a Text file and let BDOGPT help")
+    csv_excel_attachment = st.checkbox("CSV or Excel", value=False, help="Attach a CSV or Excel file and let BDOGPT help")
+    pdf_attachment = st.checkbox(" PDF", value=False, help="Upload a PDF to query")
+
+    # -------------------------------------------------------------------------------------
+    # Word Document Attachment
+    # TODO : Merge all attachment buttons and let program dynamically determine procedures
+    # -------------------------------------------------------------------------------------
+    word_attachment = st.checkbox("Word Doc", value=False, help="Upload a Word Document and let BDOGPT help")
+
     # M.Meetarbhan ============================
     # Audio File Processing Feature
     # 7/23/2024 
-    audio_attachment = st.checkbox("Upload Audio File", value=False, help="Upload an Audio File and let BDOGPT cook up a Summary")
+    audio_attachment = st.checkbox("Audio File", value=False, help="Upload an Audio File and let BDOGPT cook up a Summary")
     # =========================================
+
+    st.divider()
+    graphviz_mode = st.toggle("Graphviz mode", value=False, help="Generates graphs from your prompts or Data")
 
     if image_attachment:
         image = st.file_uploader("Upload your image", type=['png', 'jpg', 'jpeg'])
@@ -206,6 +224,12 @@ with st.sidebar:
         pdfattachments = st.file_uploader("Upload your PDF file", accept_multiple_files=True, type=['pdf'])
     else:
         pdfattachments = None
+
+    # Word Document Upload    
+    if word_attachment:
+        wordAttachment = st.file_uploader("Upload your word file", accept_multiple_files=True, type=['docx'])
+    else:
+        wordAttachment = None
 
     # Audio Upload
     if audio_attachment:
@@ -243,7 +267,15 @@ if prompt:
                 pdf_text = extract_from_pdf(pdfattachment)
                 pdf_texts.append(f"FILE {index + 1} ({pdf_title}):\n{pdf_text}\n")
             txt += '\n'.join(pdf_texts)
-    
+
+# Word Document
+    if wordAttachment:
+        word_texts = []
+        for index, word_attachment in enumerate(wordAttachment):
+            word_title = word_attachment.name
+            word_text = extract_from_word(word_attachment)
+            word_texts.append(f"FILE {index + 1} ({word_title}):\n{word_text}\n")
+        txt += '\n'.join(word_texts)
 
     # AUDIO ATTACHMENT FEATURE ==============================================
     # The Audio Attachment needs to save the audio file locally in a temporary folder to provide to the Gemini API
@@ -263,16 +295,9 @@ if prompt:
         txt += '   Generate a graph with graphviz in .dot \n'
 
 # Check : If length of text exceeds 8000, truncatenate and display with ... at the end
-<<<<<<< HEAD
 # TODO : DYNAMIC WORD COUNT ADJUSTMENT 
-    if len(txt) > 100000:
-        txt = txt[:100000] + '...'
-=======
-
-    #if len(txt) > 120000:
-        #txt = txt[:120000] + '...'
-
->>>>>>> 75a55d5a4b4f17a4c094b8fef9145b4f13bb9a97
+    #if len(txt) > 100000:
+     #   txt = txt[:100000] + '...'
     if image or url != '':
         if url != '':
             img = Image.open(requests.get(url, stream=True).raw)
