@@ -31,7 +31,7 @@ st.set_page_config(
 
 #------------------------------------------------------------
 # HEADER
-st.title('🐦BDO-GPT')
+st.title('🐦‍⬛BDO-GPT')
 st.caption("With ❤️ by your Intern")
 
 #------------------------------------------------------------
@@ -108,7 +108,7 @@ def extract_from_word(doc_file):
 #genai.configure(api_key='AIzaSyDkmaWadxYJGAgWdMVpB-qfPyhrjctrZcI')
 
 # === Billable Key === 
-genai.configure(api_key=google_api_key)
+genai.configure(api_key='AIzaSyDkmaWadxYJGAgWdMVpB-qfPyhrjctrZcI')
 # ================
 model = load_model()
 vision = load_modelvision()
@@ -201,7 +201,7 @@ with st.sidebar:
     graphviz_mode = st.toggle("Graphviz mode", value=False, help="Generates graphs from your prompts or Data")
 
     if image_attachment:
-        image = st.file_uploader("Upload your image", type=['png', 'jpg', 'jpeg'])
+        image = st.file_uploader("Upload your image", type=['png', 'jpg', 'jpeg', 'pdf'])
         url = st.text_input("Or paste your image url")
     else:
         image = None
@@ -236,6 +236,8 @@ with st.sidebar:
         audio_attachment = st.file_uploader("Upload Audio File", accept_multiple_files=False, type=['mp3'])
     else: 
         audio_attachment = None
+    
+
 
 # =========================================================================================================
 
@@ -298,6 +300,7 @@ if prompt:
 # TODO : DYNAMIC WORD COUNT ADJUSTMENT 
     #if len(txt) > 100000:
      #   txt = txt[:100000] + '...'
+
     if image or url != '':
         if url != '':
             img = Image.open(requests.get(url, stream=True).raw)
