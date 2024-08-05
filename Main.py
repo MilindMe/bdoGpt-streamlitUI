@@ -54,14 +54,14 @@ def add_message(role, content):
 # load_model() loads the default gemini-pro model for general tasks
 @st.cache_resource
 def load_model() -> genai.GenerativeModel:
-    model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel('gemini-1.5-pro')
     return model
 
 # load_modelvision() is a simple function that returns the vision model used to 
 # intepret images
 @st.cache_resource
 def load_modelvision() -> genai.GenerativeModel:
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-1.5-pro')
     return model
 
 
@@ -108,7 +108,7 @@ def extract_from_word(doc_file):
 #genai.configure(api_key='AIzaSyDkmaWadxYJGAgWdMVpB-qfPyhrjctrZcI')
 
 # === Billable Key === 
-genai.configure(api_key='AIzaSyDkmaWadxYJGAgWdMVpB-qfPyhrjctrZcI')
+genai.configure(api_key=google_api_key)
 # ================
 model = load_model()
 vision = load_modelvision()
@@ -267,7 +267,7 @@ if prompt:
             for index, pdfattachment in enumerate(pdfattachments):
                 pdf_title = pdfattachment.name
                 pdf_text = extract_from_pdf(pdfattachment)
-                pdf_texts.append(f"FILE {index + 1} ({pdf_title}):\n{pdf_text}\n")
+                pdf_texts.append(f" \n FILE {index + 1} ({pdf_title}):\n{pdf_text}\n")
             txt += '\n'.join(pdf_texts)
 
 # Word Document
@@ -312,7 +312,7 @@ if prompt:
 
     append_message(prmt)
 
-    with st.spinner('Please Wait, BDO is cooking...'):
+    with st.spinner('Please Wait while BDO brings it home...'):
         if len(prmt['parts']) > 1:
             response = vision.generate_content(prmt['parts'], stream=True, safety_settings=[
                 {
