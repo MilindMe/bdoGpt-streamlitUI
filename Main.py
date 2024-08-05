@@ -201,7 +201,7 @@ with st.sidebar:
     graphviz_mode = st.toggle("Graphviz mode", value=False, help="Generates graphs from your prompts or Data")
 
     if image_attachment:
-        image = st.file_uploader("Upload your image", type=['png', 'jpg', 'jpeg', 'pdf'])
+        image = st.file_uploader("Upload your image", accept_multiple_files=True, type=['png', 'jpg', 'jpeg', 'pdf'])
         url = st.text_input("Or paste your image url")
     else:
         image = None
@@ -209,13 +209,13 @@ with st.sidebar:
 
     # Text Upload
     if txt_attachment:
-        txtattachment = st.file_uploader("Upload your text file", type=['txt'])
+        txtattachment = st.file_uploader("Upload your text file", accept_multiple_files=True, type=['txt'])
     else:
         txtattachment = None
 
     # Excel Upload
     if csv_excel_attachment:
-        csvexcelattachment = st.file_uploader("Upload your CSV or Excel file", type=['csv', 'xlsx'])
+        csvexcelattachment = st.file_uploader("Upload your CSV or Excel file", accept_multiple_files=True ,type=['csv', 'xlsx'])
     else:
         csvexcelattachment = None
 
