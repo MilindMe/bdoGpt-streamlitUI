@@ -32,7 +32,7 @@ st.set_page_config(
 #------------------------------------------------------------
 # HEADER
 st.title('🐦‍⬛BDO-GPT')
-st.caption("With ❤️ by your")
+st.caption("With ❤️ by your Intern")
 
 #------------------------------------------------------------
 # FUNCTIONS
